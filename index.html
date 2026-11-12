@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="description" content="Cardápio digital do Bistrô da Josi. Monte sua quentinha e peça pelo WhatsApp!">
+
+    <title>Bistrô da Josi | Cardápio Digital</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- CABEÇALHO -->
+    <header class="cabecalho">
+        <div class="logo">
+            <img src="./imagens/logo.jpeg" alt="Logo Bistrô da Josi" class="logo-img">
+            <div class="logo-texto">
+                <h1>Bistrô da <strong>Josi</strong></h1>
+                <p>Sabor caseiro com toque sofisticado ❤️</p>
+            </div>
+        </div>
+
+        <a href="#montar-pedido" class="botao-cabecalho">
+            Fazer meu pedido
+        </a>
+    </header>
+
+    <main>
+
+        <!-- APRESENTAÇÃO -->
+        <section class="apresentacao">
+            <span class="etiqueta">SABOR CASEIRO</span>
+
+            <h2>Uma comida deliciosa espera por você!</h2>
+
+            <p>Preparada com carinho, do jeitinho que você gosta.</p>
+        </section>
+
+        <!-- GALERIA DE QUENTINHAS -->
+        <section class="secao galeria">
+
+            <div class="titulo-secao">
+                <span>🍱</span>
+                <div>
+                    <h2>Conheça nossas quentinhas</h2>
+                    <p>Olha só essas delícias!</p>
+                </div>
+            </div>
+
+            <div class="galeria-imagens">
+
+                <article class="foto-card">
+                    <img src="./imagens/img-1.png" alt="Quentinha especial">
+                    <h3>Quentinha especial</h3>
+                </article>
+
+                <article class="foto-card">
+                    <img src="./imagens/img-2.png" alt="Quentinha completa">
+                    <h3>Quentinha completa</h3>
+                </article>
+
+                <article class="foto-card">
+                    <img src="./imagens/img-3.png" alt="Sabor caseiro">
+                    <h3>Sabor caseiro</h3>
+                </article>
+
+                <article class="foto-card">
+                    <img src="./imagens/img-4.png" alt="Prato executivo">
+                    <h3>Prato executivo</h3>
+                </article>
+
+            </div>
+
+        </section>
+
+        <!-- MONTAR QUENTINHA -->
+        <section class="secao" id="montar-pedido">
+
+            <div class="titulo-secao">
+                <span>🍱</span>
+
+                <div>
+                    <h2>Monte sua quentinha</h2>
+                    <p>Escolha suas proteínas e acompanhamentos.</p>
+                </div>
+            </div>
+
+            <div class="precos">
+
+                <div class="preco-card">
+                    <span>1 proteína</span>
+                    <strong>R$ 15,00</strong>
+                </div>
+
+                <div class="preco-card destaque">
+                    <span>2 proteínas</span>
+                    <strong>R$ 20,00</strong>
+                </div>
+
+            </div>
+
+            <!-- PROTEÍNAS -->
+            <div class="grupo-opcoes">
+
+                <h3>1. Escolha sua proteína</h3>
+
+                <p class="orientacao">
+                    Escolha uma ou duas opções.
+                </p>
+
+                <div class="opcoes" id="lista-proteinas">
+
+                    <label class="opcao">
+                        <input type="checkbox" name="proteina" value="Linguiça assada">
+                        <span>🌭 Linguiça assada</span>
+                    </label>
+
+                    <label class="opcao">
+                        <input type="checkbox" name="proteina" value="Frango assado">
+                        <span>🍗 Frango assado</span>
+                    </label>
+
+                    <label class="opcao">
+                        <input type="checkbox" name="proteina" value="Galinha torrada">
+                        <span>🍗 Galinha torrada</span>
+                    </label>
+
+                    <label class="opcao">
+                        <input type="checkbox" name="proteina" value="Carne de sol">
+                        <span>🥩 Carne de sol</span>
+                    </label>
+
+                    <label class="opcao">
+                        <input type="checkbox" name="proteina" value="Strogonoff de frango">
+                        <span>🍛 Strogonoff de frango</span>
+                    </label>
+
+                </div>
+            </div>
+
+            <!-- ACOMPANHAMENTOS -->
+            <div class="grupo-opcoes">
+
+                <h3>2. Escolha seus acompanhamentos</h3>
+
+                <p class="orientacao">
+                    Os acompanhamentos estão incluídos no valor.
+                </p>
+
+                <div class="opcoes" id="lista-acompanhamentos">
+
+                    <label class="opcao">
+                        <input type="checkbox" name="acompanhamento" value="Arroz branco">
+                        <span>🍚 Arroz branco</span>
+                    </label>
+
+                    <label class="opcao">
+                        <input type="checkbox" name="acompanhamento" value="Arroz refogado">
+                        <span>🍚 Arroz refogado</span>
+                    </label>
+
+                    <label class="opcao">
+                        <input type="checkbox" name="acompanhamento" value="Feijão carioca">
+                        <span>🫘 Feijão carioca</span>
+                    </label>
+
+                    <label class="opcao">
+                        <input type="checkbox" name="acompanhamento" value="Macarrão ao alho e óleo">
+                        <span>🍝 Macarrão ao alho e óleo</span>
+                    </label>
+
+                    <label class="opcao">
+                        <input type="checkbox" name="acompanhamento" value="Salada verde">
+                        <span>🥗 Salada verde</span>
+                    </label>
+
+                    <label class="opcao">
+                        <input type="checkbox" name="acompanhamento" value="Farofa">
+                        <span>🥣 Farofa</span>
+                    </label>
+
+                </div>
+            </div>
+
+            <!-- QUANTIDADE E PREÇO -->
+            <div class="resumo-quentinha">
+
+                <div>
+                    <label for="quantidade-quentinha">
+                        Quantidade de quentinhas
+                    </label>
+
+                    <input type="number" id="quantidade-quentinha" min="1" value="1">
+                </div>
+
+                <div class="valor">
+                    <span>Valor unitário</span>
+                    <strong id="valor-quentinha">R$ 0,00</strong>
+                </div>
+
+            </div>
+
+            <button type="button" class="botao-principal" id="adicionar-quentinha">
+                + Adicionar quentinha
+            </button>
+
+        </section>
+
+        <!-- BEBIDAS -->
+        <section class="secao">
+
+            <div class="titulo-secao">
+                <span>🥤</span>
+
+                <div>
+                    <h2>Bebidas</h2>
+                    <p>Escolha sua bebida favorita.</p>
+                </div>
+            </div>
+
+            <div class="bebidas">
+
+                <article class="bebida">
+                    <h3>Guaraná Kuat lata</h3>
+                    <strong>R$ 6,00</strong>
+                    <button type="button" data-bebida="Guaraná Kuat lata">
+                        Adicionar
+                    </button>
+                </article>
+
+                <article class="bebida">
+                    <h3>Fanta Uva lata</h3>
+                    <strong>R$ 6,00</strong>
+                    <button type="button" data-bebida="Fanta Uva lata">
+                        Adicionar
+                    </button>
+                </article>
+
+                <article class="bebida">
+                    <h3>Coca-Cola Zero lata</h3>
+                    <strong>R$ 6,00</strong>
+                    <button type="button" data-bebida="Coca-Cola Zero lata">
+                        Adicionar
+                    </button>
+                </article>
+
+                <article class="bebida">
+                    <h3>Guaraná Zero lata</h3>
+                    <strong>R$ 6,00</strong>
+                    <button type="button" data-bebida="Guaraná Zero lata">
+                        Adicionar
+                    </button>
+                </article>
+
+                <article class="bebida">
+                    <h3>Coca-Cola lata</h3>
+                    <strong>R$ 6,00</strong>
+                    <button type="button" data-bebida="Coca-Cola lata">
+                        Adicionar
+                    </button>
+                </article>
+
+            </div>
+
+        </section>
+
+        <!-- CARRINHO -->
+        <section class="secao carrinho">
+
+            <div class="titulo-secao">
+                <span>🛒</span>
+
+                <div>
+                    <h2>Seu pedido</h2>
+                    <p>Confira os itens antes de finalizar.</p>
+                </div>
+            </div>
+
+            <div id="lista-carrinho">
+                <p class="carrinho-vazio">
+                    Seu carrinho está vazio.
+                </p>
+            </div>
+
+            <div class="total">
+                <span>Total do pedido</span>
+                <strong id="total-pedido">R$ 0,00</strong>
+            </div>
+
+            <button type="button" class="botao-whatsapp" id="finalizar-pedido">
+                💬 Finalizar pedido pelo WhatsApp
+            </button>
+
+        </section>
+
+    </main>
+
+    <!-- RODAPÉ -->
+    <footer>
+
+        <h2>Bistrô da Josi</h2>
+
+        <p>Comida boa é sempre uma boa escolha! ❤️</p>
+
+        <small>© 2026 - Todos os direitos reservados.</small>
+
+        <p class="pagamentos">
+            💳 Cartão | 💵 Dinheiro | PIX
+        </p>
+
+    </footer>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
