@@ -373,6 +373,97 @@ svg {
     text-align: center;
     background: var(--branco);
 }
+/* CONTROLE CRIATIVO DE QUANTIDADE */
+.controle-quantidade {
+    display: inline-flex;
+    align-items: center;
+    background: var(--preto-luxo);
+    padding: 6px;
+    border-radius: 50px;
+    border: 2px solid var(--dourado-medio);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+    gap: 6px;
+}
+
+.btn-qtd {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, var(--dourado-claro), var(--dourado-medio));
+    color: var(--preto-luxo);
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.btn-qtd:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 14px rgba(243, 208, 120, 0.7);
+}
+
+.btn-qtd:active {
+    transform: scale(0.88);
+}
+
+.btn-qtd.menos {
+    background: #262626;
+    color: var(--dourado-claro);
+    border: 1px solid rgba(212, 175, 55, 0.45);
+}
+
+.btn-qtd.menos:hover {
+    background: #333333;
+}
+
+.resumo-quentinha .controle-quantidade input {
+    width: 58px;
+    padding: 6px 0;
+    border: none;
+    background: transparent;
+    color: var(--branco);
+    font-family: Georgia, serif;
+    font-size: 22px;
+    font-weight: 900;
+    text-align: center;
+    pointer-events: none;
+    -moz-appearance: textfield;
+}
+
+.resumo-quentinha .controle-quantidade input::-webkit-outer-spin-button,
+.resumo-quentinha .controle-quantidade input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+@keyframes puloQuantidade {
+    0% { transform: scale(1); }
+    45% { transform: scale(1.38); color: var(--dourado-claro); }
+    100% { transform: scale(1); }
+}
+
+.animar-qtd {
+    animation: puloQuantidade 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (max-width: 480px) {
+    .controle-quantidade {
+        width: 100%;
+        justify-content: space-between;
+        padding: 8px 12px;
+    }
+
+    .resumo-quentinha .controle-quantidade input {
+        width: 70px;
+        font-size: 24px;
+    }
+}
 
 .valor { text-align: right; }
 .valor strong { font-size: 28px; color: var(--preto-luxo); }

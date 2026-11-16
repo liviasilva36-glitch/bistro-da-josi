@@ -331,6 +331,36 @@ if (campoQuantidade) {
     campoQuantidade.addEventListener("change", atualizarPreco);
 }
 
+// =========================================
+// CONTROLE ANIMADO DE QUANTIDADE
+// =========================================
+const btnDiminuirQtd = document.getElementById("btn-diminuir-qtd");
+const btnAumentarQtd = document.getElementById("btn-aumentar-qtd");
+
+function animarNumeroQuantidade() {
+    if (!campoQuantidade) return;
+    campoQuantidade.classList.remove("animar-qtd");
+    void campoQuantidade.offsetWidth;
+    campoQuantidade.classList.add("animar-qtd");
+    campoQuantidade.dispatchEvent(new Event("change"));
+}
+
+if (btnDiminuirQtd && btnAumentarQtd && campoQuantidade) {
+    btnDiminuirQtd.addEventListener("click", () => {
+        const atual = parseInt(campoQuantidade.value, 10) || 1;
+        if (atual > 1) {
+            campoQuantidade.value = atual - 1;
+            animarNumeroQuantidade();
+        }
+    });
+
+    btnAumentarQtd.addEventListener("click", () => {
+        const atual = parseInt(campoQuantidade.value, 10) || 1;
+        campoQuantidade.value = atual + 1;
+        animarNumeroQuantidade();
+    });
+}
+
 // ADICIONAR QUENTINHA
 const botaoAdicionar = document.getElementById("adicionar-quentinha");
 
