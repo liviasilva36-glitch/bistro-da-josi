@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta name="description" content="Cardápio digital do Bistrô da Josi. Monte sua quentinha e peça pelo WhatsApp!">
+    <meta name="description" content="Cardápio digital do Bistrô da Josi. Monte sua quentinha e peça pelo WhatsApp.">
 
     <title>Bistrô da Josi | Cardápio Digital</title>
 
@@ -20,7 +20,7 @@
             <img src="./imagens/logo.jpeg" alt="Logo Bistrô da Josi" class="logo-img">
             <div class="logo-texto">
                 <h1>Bistrô da <strong>Josi</strong></h1>
-                <p>Sabor caseiro com toque sofisticado ❤️</p>
+                <p>Sabor caseiro com toque sofisticado</p>
             </div>
         </div>
 
@@ -35,19 +35,23 @@
         <section class="apresentacao">
             <span class="etiqueta">SABOR CASEIRO</span>
 
-            <h2>Uma comida deliciosa espera por você!</h2>
+            <h2>Uma refeição especial espera por você</h2>
 
-            <p>Preparada com carinho, do jeitinho que você gosta.</p>
+            <p>Preparada diariamente com ingredientes selecionados e tempero artesanal.</p>
         </section>
 
         <!-- GALERIA DE QUENTINHAS -->
         <section class="secao galeria">
 
             <div class="titulo-secao">
-                <span>🍱</span>
+                <span class="icone-secao">
+                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <path d="M3 14h18M5 14a7 7 0 0 1 14 0M12 4v3M4 18h16"/>
+                    </svg>
+                </span>
                 <div>
                     <h2>Conheça nossas quentinhas</h2>
-                    <p>Olha só essas delícias!</p>
+                    <p>Apresentação impecável e porções generosas.</p>
                 </div>
             </div>
 
@@ -81,11 +85,15 @@
         <section class="secao" id="montar-pedido">
 
             <div class="titulo-secao">
-                <span>🍱</span>
+                <span class="icone-secao">
+                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
+                    </svg>
+                </span>
 
                 <div>
                     <h2>Monte sua quentinha</h2>
-                    <p>Escolha suas proteínas e acompanhamentos.</p>
+                    <p>Selecione suas proteínas e acompanhamentos.</p>
                 </div>
             </div>
 
@@ -93,12 +101,12 @@
 
                 <div class="preco-card">
                     <span>1 proteína</span>
-                    <strong>R$ 15,00</strong>
+                    <strong id="exibir-preco-1">R$ 15,00</strong>
                 </div>
 
                 <div class="preco-card destaque">
                     <span>2 proteínas</span>
-                    <strong>R$ 20,00</strong>
+                    <strong id="exibir-preco-2">R$ 20,00</strong>
                 </div>
 
             </div>
@@ -109,37 +117,10 @@
                 <h3>1. Escolha sua proteína</h3>
 
                 <p class="orientacao">
-                    Escolha uma ou duas opções.
+                    Selecione uma ou duas opções.
                 </p>
 
-                <div class="opcoes" id="lista-proteinas">
-
-                    <label class="opcao">
-                        <input type="checkbox" name="proteina" value="Linguiça assada">
-                        <span>🌭 Linguiça assada</span>
-                    </label>
-
-                    <label class="opcao">
-                        <input type="checkbox" name="proteina" value="Frango assado">
-                        <span>🍗 Frango assado</span>
-                    </label>
-
-                    <label class="opcao">
-                        <input type="checkbox" name="proteina" value="Galinha torrada">
-                        <span>🍗 Galinha torrada</span>
-                    </label>
-
-                    <label class="opcao">
-                        <input type="checkbox" name="proteina" value="Carne de sol">
-                        <span>🥩 Carne de sol</span>
-                    </label>
-
-                    <label class="opcao">
-                        <input type="checkbox" name="proteina" value="Strogonoff de frango">
-                        <span>🍛 Strogonoff de frango</span>
-                    </label>
-
-                </div>
+                <div class="opcoes" id="lista-proteinas"></div>
             </div>
 
             <!-- ACOMPANHAMENTOS -->
@@ -151,39 +132,7 @@
                     Os acompanhamentos estão incluídos no valor.
                 </p>
 
-                <div class="opcoes" id="lista-acompanhamentos">
-
-                    <label class="opcao">
-                        <input type="checkbox" name="acompanhamento" value="Arroz branco">
-                        <span>🍚 Arroz branco</span>
-                    </label>
-
-                    <label class="opcao">
-                        <input type="checkbox" name="acompanhamento" value="Arroz refogado">
-                        <span>🍚 Arroz refogado</span>
-                    </label>
-
-                    <label class="opcao">
-                        <input type="checkbox" name="acompanhamento" value="Feijão carioca">
-                        <span>🫘 Feijão carioca</span>
-                    </label>
-
-                    <label class="opcao">
-                        <input type="checkbox" name="acompanhamento" value="Macarrão ao alho e óleo">
-                        <span>🍝 Macarrão ao alho e óleo</span>
-                    </label>
-
-                    <label class="opcao">
-                        <input type="checkbox" name="acompanhamento" value="Salada verde">
-                        <span>🥗 Salada verde</span>
-                    </label>
-
-                    <label class="opcao">
-                        <input type="checkbox" name="acompanhamento" value="Farofa">
-                        <span>🥣 Farofa</span>
-                    </label>
-
-                </div>
+                <div class="opcoes" id="lista-acompanhamentos"></div>
             </div>
 
             <!-- QUANTIDADE E PREÇO -->
@@ -214,57 +163,56 @@
         <section class="secao">
 
             <div class="titulo-secao">
-                <span>🥤</span>
+                <span class="icone-secao">
+                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <path d="M8 22h8M12 15v7M6 3h12l-1.5 9a4.5 4.5 0 0 1-9 0L6 3Z"/>
+                    </svg>
+                </span>
 
                 <div>
                     <h2>Bebidas</h2>
-                    <p>Escolha sua bebida favorita.</p>
+                    <p>Escolha sua bebida gelada.</p>
                 </div>
             </div>
 
-            <div class="bebidas">
+            <div class="bebidas" id="lista-bebidas"></div>
 
-                <article class="bebida">
-                    <h3>Guaraná Kuat lata</h3>
-                    <strong>R$ 6,00</strong>
-                    <button type="button" data-bebida="Guaraná Kuat lata">
-                        Adicionar
-                    </button>
-                </article>
+        </section>
 
-                <article class="bebida">
-                    <h3>Fanta Uva lata</h3>
-                    <strong>R$ 6,00</strong>
-                    <button type="button" data-bebida="Fanta Uva lata">
-                        Adicionar
-                    </button>
-                </article>
+        <!-- PROGRAMA DE FIDELIDADE -->
+        <section class="secao fidelidade" id="secao-fidelidade">
 
-                <article class="bebida">
-                    <h3>Coca-Cola Zero lata</h3>
-                    <strong>R$ 6,00</strong>
-                    <button type="button" data-bebida="Coca-Cola Zero lata">
-                        Adicionar
-                    </button>
-                </article>
+            <div class="titulo-secao">
+                <span class="icone-secao">
+                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                </span>
 
-                <article class="bebida">
-                    <h3>Guaraná Zero lata</h3>
-                    <strong>R$ 6,00</strong>
-                    <button type="button" data-bebida="Guaraná Zero lata">
-                        Adicionar
-                    </button>
-                </article>
-
-                <article class="bebida">
-                    <h3>Coca-Cola lata</h3>
-                    <strong>R$ 6,00</strong>
-                    <button type="button" data-bebida="Coca-Cola lata">
-                        Adicionar
-                    </button>
-                </article>
-
+                <div>
+                    <h2>Clube Fidelidade Bistrô da Josi</h2>
+                    <p>Cada R$ 1,00 em pedidos equivale a 1 ponto para trocar por cortesias.</p>
+                </div>
             </div>
+
+            <div class="cartao-fidelidade">
+                <div class="topo-fidelidade">
+                    <div>
+                        <span class="label-fidelidade">SEU SALDO ATUAL</span>
+                        <h3 id="saldo-pontos">0 pontos</h3>
+                    </div>
+                    <span class="badge-nivel" id="nivel-fidelidade">Membro VIP</span>
+                </div>
+
+                <div class="barra-progresso-fundo">
+                    <div class="barra-progresso-preenchimento" id="barra-pontos" style="width: 0%;"></div>
+                </div>
+                <p class="texto-meta-pontos" id="texto-meta-pontos">
+                    Faltam 50 pontos para sua primeira cortesia.
+                </p>
+            </div>
+
+            <div class="grid-recompensas" id="lista-recompensas"></div>
 
         </section>
 
@@ -272,7 +220,11 @@
         <section class="secao carrinho">
 
             <div class="titulo-secao">
-                <span>🛒</span>
+                <span class="icone-secao">
+                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
+                    </svg>
+                </span>
 
                 <div>
                     <h2>Seu pedido</h2>
@@ -286,14 +238,93 @@
                 </p>
             </div>
 
-            <div class="total">
-                <span>Total do pedido</span>
-                <strong id="total-pedido">R$ 0,00</strong>
+            <!-- CUPOM DE DESCONTO -->
+            <div class="area-cupom">
+                <div class="linha-cupom">
+                    <input type="text" id="input-cupom" placeholder="Código promocional (Ex: JOSI10)">
+                    <button type="button" id="btn-aplicar-cupom" class="botao-cupom">Aplicar Cupom</button>
+                </div>
+                <p id="mensagem-cupom" class="mensagem-cupom"></p>
             </div>
 
+            <div class="resumo-valores-carrinho">
+                <div class="linha-resumo" id="linha-desconto" style="display: none;">
+                    <span>Desconto aplicado (<strong id="nome-cupom-ativo"></strong>)</span>
+                    <strong class="valor-desconto" id="valor-desconto">- R$ 0,00</strong>
+                </div>
+
+                <div class="total">
+                    <span>Total do pedido</span>
+                    <strong id="total-pedido">R$ 0,00</strong>
+                </div>
+            </div>
+
+            <p class="aviso-pontos-ganhos" id="aviso-pontos-ganhos">
+                Você acumulará <strong>0 pontos</strong> neste pedido.
+            </p>
+
             <button type="button" class="botao-whatsapp" id="finalizar-pedido">
-                💬 Finalizar pedido pelo WhatsApp
+                Finalizar pedido pelo WhatsApp
             </button>
+
+        </section>
+
+        <!-- RASTREAMENTO DO PEDIDO -->
+        <section class="secao rastreamento" id="secao-rastreamento" style="display: none;">
+
+            <div class="titulo-secao">
+                <span class="icone-secao">
+                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                </span>
+
+                <div>
+                    <h2>Acompanhamento do pedido</h2>
+                    <p>Acompanhe em tempo real o status da sua entrega.</p>
+                </div>
+            </div>
+
+            <div class="painel-pedido">
+                <div class="cabecalho-pedido">
+                    <h3 id="numero-pedido">Pedido #001</h3>
+                    <span class="badge-status" id="badge-status">Pedido recebido</span>
+                </div>
+
+                <div class="timeline-pedido" id="timeline-pedido">
+                    <div class="etapa-timeline ativo" data-etapa="0">
+                        <div class="indicador-etapa">1</div>
+                        <div class="conteudo-etapa">
+                            <h4>Pedido recebido</h4>
+                            <p>O Bistrô recebeu sua solicitação.</p>
+                        </div>
+                    </div>
+
+                    <div class="etapa-timeline" data-etapa="1">
+                        <div class="indicador-etapa">2</div>
+                        <div class="conteudo-etapa">
+                            <h4>Em preparação</h4>
+                            <p>Sua refeição está sendo preparada.</p>
+                        </div>
+                    </div>
+
+                    <div class="etapa-timeline" data-etapa="2">
+                        <div class="indicador-etapa">3</div>
+                        <div class="conteudo-etapa">
+                            <h4>Saiu para entrega</h4>
+                            <p>Seu pedido está a caminho.</p>
+                        </div>
+                    </div>
+
+                    <div class="etapa-timeline" data-etapa="3">
+                        <div class="indicador-etapa">4</div>
+                        <div class="conteudo-etapa">
+                            <h4>Entregue</h4>
+                            <p>Pedido concluído. Bom apetite!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
         </section>
 
@@ -304,12 +335,12 @@
 
         <h2>Bistrô da Josi</h2>
 
-        <p>Comida boa é sempre uma boa escolha! ❤️</p>
+        <p>Gastronomia caseira com excelência.</p>
 
         <small>© 2026 - Todos os direitos reservados.</small>
 
         <p class="pagamentos">
-            💳 Cartão | 💵 Dinheiro | PIX
+            Cartão de Crédito e Débito • Dinheiro • PIX
         </p>
 
     </footer>
