@@ -63,6 +63,7 @@ function obterConfigCardapio() {
 
 let carrinho = [];
 let cupomAplicado = null;
+let animarUltimoItem = false;
 
 const campoQuantidade = document.getElementById("quantidade-quentinha");
 const campoValor = document.getElementById("valor-quentinha");
@@ -74,6 +75,80 @@ function formatarMoeda(valor) {
         style: "currency",
         currency: "BRL"
     });
+}
+
+// =========================================
+// EFEITO VISUAL DE ADIÇÃO AO CARRINHO
+// =========================================
+let timerToast;
+
+function dispararEfeitoCompra(titulo, subtitulo, emoji = "🍱", elementoOrigem = null) {
+    // 1. Ícone voando do botão clicado até a seção do pedido
+    if (elementoOrigem && listaCarrinho) {
+        const rectOrigem = elementoOrigem.getBoundingClientRect();
+        const rectDestino = listaCarrinho.getBoundingClientRect();
+
+        const voador = document.createElement("div");
+        voador.className = "item-voando-carrinho";
+        voador.textContent = emoji;
+        voador.style.left = `${rectOrigem.left + rectOrigem.width / 2 - 14}px`;
+        voador.style.top = `${rectOrigem.top + rectOrigem.height / 2 - 14}px`;
+        document.body.appendChild(voador);
+
+        const deltaX = (rectDestino.left + rectDestino.width / 2) - (rectOrigem.left + rectOrigem.width / 2);
+        const deltaY = Math.min(rectDestino.top, window.innerHeight - 80) - rectOrigem.top;
+
+        requestAnimationFrame(() => {
+            voador.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.4) rotate(25deg)`;
+            voador.style.opacity = "0";
+        });
+
+        setTimeout(() => voador.remove(), 800);
+    }
+
+    // 2. Pulso no valor total do pedido
+    if (totalPedido) {
+        totalPedido.classList.remove("pulsar-total");
+        void totalPedido.offsetWidth;
+        totalPedido.classList.add("pulsar-total");
+    }
+
+    // 3. Notificação Toast flutuante
+    let toast = document.getElementById("toast-compra");
+    if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "toast-compra";
+        toast.className = "toast-compra";
+        toast.innerHTML = `
+            <div class="toast-icone" id="toast-icone">🍱</div>
+            <div class="toast-texto">
+                <strong id="toast-titulo"></strong>
+                <span id="toast-subtitulo"></span>
+            </div>
+            <button type="button" class="toast-ver-carrinho" id="toast-ver-carrinho">Ver pedido</button>
+        `;
+        document.body.appendChild(toast);
+
+        toast.querySelector("#toast-ver-carrinho").addEventListener("click", () => {
+            toast.classList.remove("visivel");
+            if (listaCarrinho) {
+                listaCarrinho.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        });
+    }
+
+    document.getElementById("toast-icone").textContent = emoji;
+    document.getElementById("toast-titulo").textContent = titulo;
+    document.getElementById("toast-subtitulo").textContent = subtitulo;
+
+    toast.classList.remove("visivel");
+    void toast.offsetWidth;
+    toast.classList.add("visivel");
+
+    clearTimeout(timerToast);
+    timerToast = setTimeout(() => {
+        toast.classList.remove("visivel");
+    }, 3200);
 }
 
 // =========================================
@@ -137,7 +212,8 @@ function renderizarFidelidade() {
             </button>
         `;
 
-        card.querySelector("button").addEventListener("click", () => {
+        const btnResgatar = card.querySelector("button");
+        btnResgatar.addEventListener("click", () => {
             if (obterPontosCliente() < rec.pontosNecessarios) return;
 
             salvarPontosCliente(obterPontosCliente() - rec.pontosNecessarios);
@@ -151,9 +227,10 @@ function renderizarFidelidade() {
                 pontosGastos: rec.pontosNecessarios
             });
 
+            animarUltimoItem = true;
             renderizarFidelidade();
             renderizarCarrinho();
-            alert(`Prêmio "${rec.titulo}" adicionado ao seu carrinho!`);
+            dispararEfeitoCompra("Prêmio resgatado!", rec.titulo, "🎁", btnResgatar);
         });
 
         listaRecEl.appendChild(card);
@@ -214,7 +291,6 @@ function calcularValoresCarrinho() {
 
     const totalFinal = Math.max(0, subtotal - desconto);
 
-    // 1 marmita comprada = 1 ponto no cartão fidelidade
     const pontosGanhos = carrinho.reduce((soma, item) => {
         if (item.nome === "Quentinha" && !item.ehRecompensa) {
             return soma + Number(item.quantidade);
@@ -286,15 +362,17 @@ function renderizarCardapio() {
                 <button type="button">Adicionar</button>
             `;
 
-            article.querySelector("button").addEventListener("click", () => {
+            const btnBebida = article.querySelector("button");
+            btnBebida.addEventListener("click", () => {
                 carrinho.push({
                     nome: bebida.nome,
                     quantidade: 1,
                     preco: Number(bebida.preco),
                     subtotal: Number(bebida.preco)
                 });
+                animarUltimoItem = true;
                 renderizarCarrinho();
-                alert(`${bebida.nome} adicionado ao carrinho!`);
+                dispararEfeitoCompra("Bebida adicionada!", `1x ${bebida.nome}`, "🥤", btnBebida);
             });
 
             containerBebidas.appendChild(article);
@@ -395,7 +473,15 @@ if (botaoAdicionar) {
             subtotal: preco * quantidade
         });
 
+        animarUltimoItem = true;
         renderizarCarrinho();
+
+        dispararEfeitoCompra(
+            "Adicionado ao pedido!",
+            `${quantidade}x Quentinha (${proteinas.join(" + ")})`,
+            "🍱",
+            botaoAdicionar
+        );
 
         document.querySelectorAll(
             'input[name="proteina"], input[name="acompanhamento"]'
@@ -405,8 +491,6 @@ if (botaoAdicionar) {
 
         campoQuantidade.value = 1;
         atualizarPreco();
-
-        alert("Quentinha adicionada ao carrinho!");
     });
 }
 
@@ -423,7 +507,8 @@ function renderizarCarrinho() {
 
     carrinho.forEach((item, indice) => {
         const div = document.createElement("div");
-        div.className = "item-carrinho";
+        const ehUltimo = animarUltimoItem && indice === carrinho.length - 1;
+        div.className = `item-carrinho${ehUltimo ? " novo-item" : ""}`;
 
         const descricao = document.createElement("div");
 
@@ -461,6 +546,8 @@ function renderizarCarrinho() {
         div.append(descricao, preco, remover);
         listaCarrinho.appendChild(div);
     });
+
+    animarUltimoItem = false;
 
     const { desconto, totalFinal, pontosGanhos } = calcularValoresCarrinho();
 
@@ -530,7 +617,6 @@ if (botaoFinalizar) {
         const { desconto, totalFinal, pontosGanhos } = calcularValoresCarrinho();
         const numeroPedido = gerarNumeroPedido();
 
-        // Credita 1 ponto por marmita comprada ao cliente
         salvarPontosCliente(obterPontosCliente() + pontosGanhos);
 
         const novoPedido = {

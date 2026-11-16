@@ -1022,3 +1022,136 @@ footer small {
     .rodape-card-pedido { flex-direction: column; align-items: stretch; }
     .botao-avancar-pedido { width: 100%; text-align: center; }
 }
+/* =========================================
+   EFEITO DE COMPRA (TOAST + ÍCONE VOADOR + CARRINHO)
+   ========================================= */
+.toast-compra {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: linear-gradient(135deg, var(--preto-luxo) 0%, #241f12 100%);
+    color: var(--branco);
+    border: 2px solid var(--dourado-medio);
+    border-radius: 16px;
+    padding: 14px 20px;
+    box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
+    transform: translateY(120%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+    max-width: 360px;
+}
+
+.toast-compra.visivel {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.toast-icone {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--dourado-claro), var(--dourado-medio));
+    color: var(--preto-luxo);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    animation: girarPop 0.5s ease;
+}
+
+.toast-texto strong {
+    display: block;
+    color: var(--dourado-claro);
+    font-size: 14px;
+    letter-spacing: 0.3px;
+}
+
+.toast-texto span {
+    display: block;
+    color: #e5e5e5;
+    font-size: 13px;
+    margin-top: 2px;
+}
+
+.toast-ver-carrinho {
+    background: rgba(243, 208, 120, 0.15);
+    color: var(--dourado-claro);
+    border: 1px solid var(--dourado-medio);
+    border-radius: 10px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.toast-ver-carrinho:hover {
+    background: var(--dourado-medio);
+    color: var(--preto-luxo);
+}
+
+/* Ícone que voa até o carrinho */
+.item-voando-carrinho {
+    position: fixed;
+    z-index: 9998;
+    font-size: 28px;
+    pointer-events: none;
+    transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.75s ease;
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.3));
+}
+
+/* Entrada animada do item novo na lista */
+@keyframes entrarItemCarrinho {
+    0% {
+        opacity: 0;
+        transform: translateX(-18px) scale(0.97);
+        box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7);
+    }
+    55% {
+        opacity: 1;
+        transform: translateX(0) scale(1.01);
+        box-shadow: 0 0 22px rgba(212, 175, 55, 0.55);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+        box-shadow: none;
+    }
+}
+
+@keyframes girarPop {
+    0% { transform: scale(0.4) rotate(-25deg); }
+    70% { transform: scale(1.15) rotate(8deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes pulsarTotalCarrinho {
+    0% { transform: scale(1); }
+    45% { transform: scale(1.12); color: var(--dourado-escuro); }
+    100% { transform: scale(1); }
+}
+
+.item-carrinho.novo-item {
+    animation: entrarItemCarrinho 0.65s ease-out;
+}
+
+.pulsar-total {
+    animation: pulsarTotalCarrinho 0.45s ease;
+}
+
+@media (max-width: 600px) {
+    .toast-compra {
+        left: 14px;
+        right: 14px;
+        bottom: 16px;
+        max-width: none;
+        padding: 12px 14px;
+    }
+}
