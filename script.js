@@ -35,23 +35,16 @@ const RECOMPENSAS_FIDELIDADE = [
     {
         id: "rec_bebida",
         titulo: "🥤 Refrigerante Lata Grátis",
-        descricao: "Qualquer refrigerante lata por conta da casa.",
-        pontosNecessarios: 50,
-        itemCarrinho: "Recompensa: Refrigerante Lata Grátis"
+        descricao: "Na compra de 10 marmitas, ganhe 1 refrigerante lata por conta da casa.",
+        pontosNecessarios: 10,
+        itemCarrinho: "Recompensa Fidelidade (10 marmitas): Refrigerante Lata Grátis"
     },
     {
         id: "rec_quentinha1",
-        titulo: "🍱 Quentinha 1 Proteína Grátis",
-        descricao: "Uma quentinha completa com 1 proteína à sua escolha.",
-        pontosNecessarios: 150,
-        itemCarrinho: "Recompensa: Quentinha 1 Proteína Grátis"
-    },
-    {
-        id: "rec_quentinha2",
-        titulo: "👑 Quentinha Especial (2 Proteínas) Grátis",
-        descricao: "Nossa quentinha completa com 2 proteínas.",
-        pontosNecessarios: 220,
-        itemCarrinho: "Recompensa: Quentinha 2 Proteínas Grátis"
+        titulo: "🍱 Marmita Média (1 Proteína) Grátis",
+        descricao: "Na compra de 20 marmitas, ganhe 1 marmita média (R$ 15,00) à sua escolha.",
+        pontosNecessarios: 20,
+        itemCarrinho: "Recompensa Fidelidade (20 marmitas): Marmita Média (1 Proteína) Grátis"
     }
 ];
 
@@ -84,7 +77,7 @@ function formatarMoeda(valor) {
 }
 
 // =========================================
-// FIDELIDADE & PONTOS
+// FIDELIDADE POR MARMITAS (1 MARMITA = 1 PONTO)
 // =========================================
 function obterPontosCliente() {
     return Number(localStorage.getItem("bistro_pontos_cliente") || 0);
@@ -95,7 +88,7 @@ function salvarPontosCliente(novoSaldo) {
 }
 
 function renderizarFidelidade() {
-    const pontos = obterPontosCliente();
+    const marmitasAcumuladas = obterPontosCliente();
     const saldoEl = document.getElementById("saldo-pontos");
     const nivelEl = document.getElementById("nivel-fidelidade");
     const barraEl = document.getElementById("barra-pontos");
@@ -104,41 +97,43 @@ function renderizarFidelidade() {
 
     if (!saldoEl || !listaRecEl) return;
 
-    saldoEl.textContent = `${pontos} ponto${pontos === 1 ? "" : "s"}`;
+    saldoEl.textContent = `${marmitasAcumuladas} marmita${marmitasAcumuladas === 1 ? "" : "s"}`;
 
-    if (pontos >= 200) {
+    if (marmitasAcumuladas >= 20) {
         nivelEl.textContent = "👑 Cliente Ouro";
-    } else if (pontos >= 80) {
+    } else if (marmitasAcumuladas >= 10) {
         nivelEl.textContent = "⭐ Cliente Prata";
     } else {
         nivelEl.textContent = "🎖️ Cliente VIP";
     }
 
-    const proximaMeta = RECOMPENSAS_FIDELIDADE.find(r => pontos < r.pontosNecessarios);
+    const proximaMeta = RECOMPENSAS_FIDELIDADE.find(r => marmitasAcumuladas < r.pontosNecessarios);
     if (proximaMeta) {
-        const faltam = proximaMeta.pontosNecessarios - pontos;
-        const porcentagem = Math.min(100, Math.round((pontos / proximaMeta.pontosNecessarios) * 100));
+        const faltam = proximaMeta.pontosNecessarios - marmitasAcumuladas;
+        const porcentagem = Math.min(100, Math.round((marmitasAcumuladas / proximaMeta.pontosNecessarios) * 100));
         barraEl.style.width = `${porcentagem}%`;
-        metaEl.textContent = `Faltam ${faltam} pontos para resgatar: ${proximaMeta.titulo}`;
+        metaEl.textContent = `Falta${faltam === 1 ? "" : "m"} ${faltam} marmita${faltam === 1 ? "" : "s"} para resgatar: ${proximaMeta.titulo}`;
     } else {
         barraEl.style.width = "100%";
-        metaEl.textContent = "Parabéns! Você já pode resgatar qualquer recompensa do Bistrô!";
+        metaEl.textContent = "Parabéns! Você já atingiu 20 marmitas e pode resgatar qualquer prêmio!";
     }
 
     listaRecEl.innerHTML = "";
     RECOMPENSAS_FIDELIDADE.forEach((rec) => {
-        const podeResgatar = pontos >= rec.pontosNecessarios;
+        const podeResgatar = marmitasAcumuladas >= rec.pontosNecessarios;
         const card = document.createElement("article");
         card.className = `card-recompensa ${podeResgatar ? "disponivel" : ""}`;
 
+        const faltam = rec.pontosNecessarios - marmitasAcumuladas;
+
         card.innerHTML = `
             <div>
-                <span class="custo-pontos">${rec.pontosNecessarios} pts</span>
+                <span class="custo-pontos">${rec.pontosNecessarios} marmitas</span>
                 <h4>${rec.titulo}</h4>
                 <p>${rec.descricao}</p>
             </div>
             <button type="button" ${podeResgatar ? "" : "disabled"}>
-                ${podeResgatar ? "Resgatar Agora" : `Faltam ${rec.pontosNecessarios - pontos} pts`}
+                ${podeResgatar ? "Resgatar Prêmio" : `Faltam ${faltam} marmita${faltam === 1 ? "" : "s"}`}
             </button>
         `;
 
@@ -158,7 +153,7 @@ function renderizarFidelidade() {
 
             renderizarFidelidade();
             renderizarCarrinho();
-            alert(`Recompensa "${rec.titulo}" adicionada ao seu carrinho!`);
+            alert(`Prêmio "${rec.titulo}" adicionado ao seu carrinho!`);
         });
 
         listaRecEl.appendChild(card);
@@ -166,59 +161,7 @@ function renderizarFidelidade() {
 }
 
 // =========================================
-// CUPONS AUTOMÁTICOS POR QUANTIDADE
-// =========================================
-function verificarPromocoesQuantidade() {
-    // Remove brindes automáticos anteriores para recalcular conforme o carrinho atual
-    carrinho = carrinho.filter(item => !item.ehBrindeQuantidade);
-
-    let totalQuentinhas = 0;
-    let totalQuentinhasGrandes = 0;
-
-    carrinho.forEach(item => {
-        if (item.nome === "Quentinha" && !item.ehRecompensa) {
-            totalQuentinhas += item.quantidade;
-            if (item.proteinas && item.proteinas.length === 2) {
-                totalQuentinhasGrandes += item.quantidade;
-            }
-        }
-    });
-
-    const brindesAtivos = [];
-
-    // Regra 1: Na compra de 10 quentinhas ganha 1 refrigerante
-    if (totalQuentinhas >= 10) {
-        carrinho.push({
-            nome: "🥤 Brinde Cupom REFRI10: 1 Refrigerante Grátis",
-            quantidade: 1,
-            preco: 0,
-            subtotal: 0,
-            ehRecompensa: true,
-            ehBrindeQuantidade: true,
-            codigoCupom: "REFRI10"
-        });
-        brindesAtivos.push("REFRI10 (1 Refrigerante Grátis)");
-    }
-
-    // Regra 2: Na compra de 20 quentinhas grandes (2 proteínas) ganha 1 quentinha média
-    if (totalQuentinhasGrandes >= 20) {
-        carrinho.push({
-            nome: "🍱 Brinde Cupom QUENTINHA20: 1 Quentinha Média (1 Proteína) Grátis",
-            quantidade: 1,
-            preco: 0,
-            subtotal: 0,
-            ehRecompensa: true,
-            ehBrindeQuantidade: true,
-            codigoCupom: "QUENTINHA20"
-        });
-        brindesAtivos.push("QUENTINHA20 (1 Quentinha Média Grátis)");
-    }
-
-    return { totalQuentinhas, totalQuentinhasGrandes, brindesAtivos };
-}
-
-// =========================================
-// CUPONS DE DESCONTO MANUAIS
+// CUPONS DE DESCONTO
 // =========================================
 const btnAplicarCupom = document.getElementById("btn-aplicar-cupom");
 const inputCupom = document.getElementById("input-cupom");
@@ -230,18 +173,6 @@ if (btnAplicarCupom) {
         if (!codigoDigitado) {
             msgCupom.textContent = "Digite um código de cupom.";
             msgCupom.className = "mensagem-cupom erro";
-            return;
-        }
-
-        if (codigoDigitado === "REFRI10") {
-            msgCupom.textContent = "O cupom REFRI10 é aplicado automaticamente ao adicionar 10 quentinhas no carrinho!";
-            msgCupom.className = "mensagem-cupom sucesso";
-            return;
-        }
-
-        if (codigoDigitado === "QUENTINHA20") {
-            msgCupom.textContent = "O cupom QUENTINHA20 é aplicado automaticamente ao adicionar 20 quentinhas grandes (2 proteínas)!";
-            msgCupom.className = "mensagem-cupom sucesso";
             return;
         }
 
@@ -282,7 +213,14 @@ function calcularValoresCarrinho() {
     }
 
     const totalFinal = Math.max(0, subtotal - desconto);
-    const pontosGanhos = Math.floor(totalFinal);
+
+    // 1 marmita comprada = 1 ponto no cartão fidelidade
+    const pontosGanhos = carrinho.reduce((soma, item) => {
+        if (item.nome === "Quentinha" && !item.ehRecompensa) {
+            return soma + Number(item.quantidade);
+        }
+        return soma;
+    }, 0);
 
     return { subtotal, desconto, totalFinal, pontosGanhos };
 }
@@ -418,11 +356,8 @@ if (botaoAdicionar) {
             return;
         }
 
-        const tamanhoRotulo = proteinas.length === 2 ? "Quentinha Grande (2 Proteínas)" : "Quentinha Média (1 Proteína)";
-
         carrinho.push({
             nome: "Quentinha",
-            tamanhoRotulo,
             proteinas,
             acompanhamentos,
             quantidade,
@@ -449,34 +384,11 @@ if (botaoAdicionar) {
 function renderizarCarrinho() {
     if (!listaCarrinho || !totalPedido) return;
 
-    const { totalQuentinhas, totalQuentinhasGrandes, brindesAtivos } = verificarPromocoesQuantidade();
-
     listaCarrinho.innerHTML = "";
 
     if (carrinho.length === 0) {
         listaCarrinho.innerHTML =
             '<p class="carrinho-vazio">Seu carrinho está vazio.</p>';
-    } else {
-        // Banner de progresso / cupons ativos por quantidade
-        const bannerPromo = document.createElement("div");
-        bannerPromo.style.cssText = "background:#fdf6e7;border:1px solid #d4af37;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:0.9rem;color:#3b2f1e;";
-
-        let textoPromo = "";
-        if (brindesAtivos.length > 0) {
-            textoPromo += `🎉 <strong>Cupom ativado:</strong> ${brindesAtivos.join(" + ")}!<br>`;
-        }
-        if (totalQuentinhas > 0 && totalQuentinhas < 10) {
-            const faltam10 = 10 - totalQuentinhas;
-            textoPromo += `🥤 Adicione mais <strong>${faltam10} quentinha${faltam10 > 1 ? "s" : ""}</strong> para ativar o cupom <strong>REFRI10</strong> (1 Refrigerante Grátis)!`;
-        } else if (totalQuentinhasGrandes >= 10 && totalQuentinhasGrandes < 20) {
-            const faltam20 = 20 - totalQuentinhasGrandes;
-            textoPromo += `🍱 Adicione mais <strong>${faltam20} quentinha${faltam20 > 1 ? "s" : ""} grande${faltam20 > 1 ? "s" : ""} (2 proteínas)</strong> para ativar o cupom <strong>QUENTINHA20</strong> (1 Quentinha Média Grátis)!`;
-        }
-
-        if (textoPromo) {
-            bannerPromo.innerHTML = textoPromo;
-            listaCarrinho.appendChild(bannerPromo);
-        }
     }
 
     carrinho.forEach((item, indice) => {
@@ -486,8 +398,7 @@ function renderizarCarrinho() {
         const descricao = document.createElement("div");
 
         const titulo = document.createElement("strong");
-        const nomeExibicao = item.tamanhoRotulo ? item.tamanhoRotulo : item.nome;
-        titulo.textContent = `${item.quantidade}x ${nomeExibicao}`;
+        titulo.textContent = `${item.quantidade}x ${item.nome}`;
 
         descricao.appendChild(titulo);
 
@@ -502,32 +413,22 @@ function renderizarCarrinho() {
         }
 
         const preco = document.createElement("strong");
-        preco.textContent = item.ehBrindeQuantidade
-            ? `GRÁTIS (${item.codigoCupom})`
-            : item.ehRecompensa
-                ? "GRÁTIS (Fidelidade)"
-                : formatarMoeda(item.subtotal);
+        preco.textContent = item.ehRecompensa ? "GRÁTIS (Fidelidade)" : formatarMoeda(item.subtotal);
 
-        div.append(descricao, preco);
+        const remover = document.createElement("button");
+        remover.className = "remover-item";
+        remover.textContent = "Remover";
 
-        // Brindes automáticos só saem se o cliente reduzir as quentinhas
-        if (!item.ehBrindeQuantidade) {
-            const remover = document.createElement("button");
-            remover.className = "remover-item";
-            remover.textContent = "Remover";
+        remover.addEventListener("click", () => {
+            if (item.ehRecompensa && item.pontosGastos) {
+                salvarPontosCliente(obterPontosCliente() + item.pontosGastos);
+                renderizarFidelidade();
+            }
+            carrinho.splice(indice, 1);
+            renderizarCarrinho();
+        });
 
-            remover.addEventListener("click", () => {
-                if (item.ehRecompensa && item.pontosGastos) {
-                    salvarPontosCliente(obterPontosCliente() + item.pontosGastos);
-                    renderizarFidelidade();
-                }
-                carrinho.splice(indice, 1);
-                renderizarCarrinho();
-            });
-
-            div.appendChild(remover);
-        }
-
+        div.append(descricao, preco, remover);
         listaCarrinho.appendChild(div);
     });
 
@@ -548,7 +449,7 @@ function renderizarCarrinho() {
 
     const avisoPontos = document.getElementById("aviso-pontos-ganhos");
     if (avisoPontos) {
-        avisoPontos.innerHTML = `✨ Você vai ganhar <strong>${pontosGanhos} ponto${pontosGanhos === 1 ? "" : "s"}</strong> neste pedido!`;
+        avisoPontos.innerHTML = `✨ Você vai acumular <strong>+${pontosGanhos} marmita${pontosGanhos === 1 ? "" : "s"}</strong> no cartão fidelidade com este pedido!`;
     }
 }
 
@@ -596,22 +497,17 @@ if (botaoFinalizar) {
             return;
         }
 
-        const { brindesAtivos } = verificarPromocoesQuantidade();
         const { desconto, totalFinal, pontosGanhos } = calcularValoresCarrinho();
         const numeroPedido = gerarNumeroPedido();
 
-        // Credita os pontos ao cliente
+        // Credita 1 ponto por marmita comprada ao cliente
         salvarPontosCliente(obterPontosCliente() + pontosGanhos);
-
-        const cuponsUsados = [];
-        if (cupomAplicado) cuponsUsados.push(cupomAplicado.codigo);
-        brindesAtivos.forEach(b => cuponsUsados.push(b));
 
         const novoPedido = {
             numero: numeroPedido,
             itens: [...carrinho],
             total: totalFinal,
-            cupom: cuponsUsados.length > 0 ? cuponsUsados.join(", ") : null,
+            cupom: cupomAplicado ? cupomAplicado.codigo : null,
             desconto,
             pontosGanhos,
             statusIndex: 0,
@@ -630,33 +526,22 @@ if (botaoFinalizar) {
         let mensagem = `Olá! Gostaria de fazer o *Pedido ${numeroPedido}* no Bistrô da Josi.\n\n`;
 
         carrinho.forEach((item, indice) => {
-            const nomeItem = item.tamanhoRotulo ? item.tamanhoRotulo : item.nome;
-            mensagem += `${indice + 1}. ${item.quantidade}x ${nomeItem}\n`;
+            mensagem += `${indice + 1}. ${item.quantidade}x ${item.nome}\n`;
 
             if (item.proteinas) {
                 mensagem += `Proteínas: ${item.proteinas.join(", ")}\n`;
                 mensagem += `Acompanhamentos: ${item.acompanhamentos.join(", ")}\n`;
             }
 
-            const valorTexto = item.ehBrindeQuantidade
-                ? `GRÁTIS (${item.codigoCupom})`
-                : item.ehRecompensa
-                    ? "GRÁTIS (Fidelidade)"
-                    : formatarMoeda(item.subtotal);
-
-            mensagem += `Subtotal: ${valorTexto}\n\n`;
+            mensagem += `Subtotal: ${item.ehRecompensa ? "GRÁTIS (Fidelidade)" : formatarMoeda(item.subtotal)}\n\n`;
         });
 
         if (desconto > 0 && cupomAplicado) {
             mensagem += `Cupom (${cupomAplicado.codigo}): -${formatarMoeda(desconto)}\n`;
         }
 
-        if (brindesAtivos.length > 0) {
-            mensagem += `Promoção ativada: ${brindesAtivos.join(" + ")}\n`;
-        }
-
         mensagem += `TOTAL: ${formatarMoeda(totalFinal)}\n`;
-        mensagem += `Pontos acumulados neste pedido: +${pontosGanhos} pts`;
+        mensagem += `Cartão Fidelidade: +${pontosGanhos} marmita${pontosGanhos === 1 ? "" : "s"} acumulada${pontosGanhos === 1 ? "" : "s"}`;
         mensagem += "\n\nAguardo a confirmação. Obrigado!";
 
         const link = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(mensagem)}`;
