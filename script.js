@@ -166,7 +166,59 @@ function renderizarFidelidade() {
 }
 
 // =========================================
-// CUPONS DE DESCONTO
+// CUPONS AUTOMÁTICOS POR QUANTIDADE
+// =========================================
+function verificarPromocoesQuantidade() {
+    // Remove brindes automáticos anteriores para recalcular conforme o carrinho atual
+    carrinho = carrinho.filter(item => !item.ehBrindeQuantidade);
+
+    let totalQuentinhas = 0;
+    let totalQuentinhasGrandes = 0;
+
+    carrinho.forEach(item => {
+        if (item.nome === "Quentinha" && !item.ehRecompensa) {
+            totalQuentinhas += item.quantidade;
+            if (item.proteinas && item.proteinas.length === 2) {
+                totalQuentinhasGrandes += item.quantidade;
+            }
+        }
+    });
+
+    const brindesAtivos = [];
+
+    // Regra 1: Na compra de 10 quentinhas ganha 1 refrigerante
+    if (totalQuentinhas >= 10) {
+        carrinho.push({
+            nome: "🥤 Brinde Cupom REFRI10: 1 Refrigerante Grátis",
+            quantidade: 1,
+            preco: 0,
+            subtotal: 0,
+            ehRecompensa: true,
+            ehBrindeQuantidade: true,
+            codigoCupom: "REFRI10"
+        });
+        brindesAtivos.push("REFRI10 (1 Refrigerante Grátis)");
+    }
+
+    // Regra 2: Na compra de 20 quentinhas grandes (2 proteínas) ganha 1 quentinha média
+    if (totalQuentinhasGrandes >= 20) {
+        carrinho.push({
+            nome: "🍱 Brinde Cupom QUENTINHA20: 1 Quentinha Média (1 Proteína) Grátis",
+            quantidade: 1,
+            preco: 0,
+            subtotal: 0,
+            ehRecompensa: true,
+            ehBrindeQuantidade: true,
+            codigoCupom: "QUENTINHA20"
+        });
+        brindesAtivos.push("QUENTINHA20 (1 Quentinha Média Grátis)");
+    }
+
+    return { totalQuentinhas, totalQuentinhasGrandes, brindesAtivos };
+}
+
+// =========================================
+// CUPONS DE DESCONTO MANUAIS
 // =========================================
 const btnAplicarCupom = document.getElementById("btn-aplicar-cupom");
 const inputCupom = document.getElementById("input-cupom");
@@ -178,6 +230,18 @@ if (btnAplicarCupom) {
         if (!codigoDigitado) {
             msgCupom.textContent = "Digite um código de cupom.";
             msgCupom.className = "mensagem-cupom erro";
+            return;
+        }
+
+        if (codigoDigitado === "REFRI10") {
+            msgCupom.textContent = "O cupom REFRI10 é aplicado automaticamente ao adicionar 10 quentinhas no carrinho!";
+            msgCupom.className = "mensagem-cupom sucesso";
+            return;
+        }
+
+        if (codigoDigitado === "QUENTINHA20") {
+            msgCupom.textContent = "O cupom QUENTINHA20 é aplicado automaticamente ao adicionar 20 quentinhas grandes (2 proteínas)!";
+            msgCupom.className = "mensagem-cupom sucesso";
             return;
         }
 
@@ -354,8 +418,11 @@ if (botaoAdicionar) {
             return;
         }
 
+        const tamanhoRotulo = proteinas.length === 2 ? "Quentinha Grande (2 Proteínas)" : "Quentinha Média (1 Proteína)";
+
         carrinho.push({
             nome: "Quentinha",
+            tamanhoRotulo,
             proteinas,
             acompanhamentos,
             quantidade,
@@ -382,11 +449,34 @@ if (botaoAdicionar) {
 function renderizarCarrinho() {
     if (!listaCarrinho || !totalPedido) return;
 
+    const { totalQuentinhas, totalQuentinhasGrandes, brindesAtivos } = verificarPromocoesQuantidade();
+
     listaCarrinho.innerHTML = "";
 
     if (carrinho.length === 0) {
         listaCarrinho.innerHTML =
             '<p class="carrinho-vazio">Seu carrinho está vazio.</p>';
+    } else {
+        // Banner de progresso / cupons ativos por quantidade
+        const bannerPromo = document.createElement("div");
+        bannerPromo.style.cssText = "background:#fdf6e7;border:1px solid #d4af37;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:0.9rem;color:#3b2f1e;";
+
+        let textoPromo = "";
+        if (brindesAtivos.length > 0) {
+            textoPromo += `🎉 <strong>Cupom ativado:</strong> ${brindesAtivos.join(" + ")}!<br>`;
+        }
+        if (totalQuentinhas > 0 && totalQuentinhas < 10) {
+            const faltam10 = 10 - totalQuentinhas;
+            textoPromo += `🥤 Adicione mais <strong>${faltam10} quentinha${faltam10 > 1 ? "s" : ""}</strong> para ativar o cupom <strong>REFRI10</strong> (1 Refrigerante Grátis)!`;
+        } else if (totalQuentinhasGrandes >= 10 && totalQuentinhasGrandes < 20) {
+            const faltam20 = 20 - totalQuentinhasGrandes;
+            textoPromo += `🍱 Adicione mais <strong>${faltam20} quentinha${faltam20 > 1 ? "s" : ""} grande${faltam20 > 1 ? "s" : ""} (2 proteínas)</strong> para ativar o cupom <strong>QUENTINHA20</strong> (1 Quentinha Média Grátis)!`;
+        }
+
+        if (textoPromo) {
+            bannerPromo.innerHTML = textoPromo;
+            listaCarrinho.appendChild(bannerPromo);
+        }
     }
 
     carrinho.forEach((item, indice) => {
@@ -396,7 +486,8 @@ function renderizarCarrinho() {
         const descricao = document.createElement("div");
 
         const titulo = document.createElement("strong");
-        titulo.textContent = `${item.quantidade}x ${item.nome}`;
+        const nomeExibicao = item.tamanhoRotulo ? item.tamanhoRotulo : item.nome;
+        titulo.textContent = `${item.quantidade}x ${nomeExibicao}`;
 
         descricao.appendChild(titulo);
 
@@ -411,22 +502,32 @@ function renderizarCarrinho() {
         }
 
         const preco = document.createElement("strong");
-        preco.textContent = item.ehRecompensa ? "GRÁTIS (Fidelidade)" : formatarMoeda(item.subtotal);
+        preco.textContent = item.ehBrindeQuantidade
+            ? `GRÁTIS (${item.codigoCupom})`
+            : item.ehRecompensa
+                ? "GRÁTIS (Fidelidade)"
+                : formatarMoeda(item.subtotal);
 
-        const remover = document.createElement("button");
-        remover.className = "remover-item";
-        remover.textContent = "Remover";
+        div.append(descricao, preco);
 
-        remover.addEventListener("click", () => {
-            if (item.ehRecompensa && item.pontosGastos) {
-                salvarPontosCliente(obterPontosCliente() + item.pontosGastos);
-                renderizarFidelidade();
-            }
-            carrinho.splice(indice, 1);
-            renderizarCarrinho();
-        });
+        // Brindes automáticos só saem se o cliente reduzir as quentinhas
+        if (!item.ehBrindeQuantidade) {
+            const remover = document.createElement("button");
+            remover.className = "remover-item";
+            remover.textContent = "Remover";
 
-        div.append(descricao, preco, remover);
+            remover.addEventListener("click", () => {
+                if (item.ehRecompensa && item.pontosGastos) {
+                    salvarPontosCliente(obterPontosCliente() + item.pontosGastos);
+                    renderizarFidelidade();
+                }
+                carrinho.splice(indice, 1);
+                renderizarCarrinho();
+            });
+
+            div.appendChild(remover);
+        }
+
         listaCarrinho.appendChild(div);
     });
 
@@ -495,17 +596,22 @@ if (botaoFinalizar) {
             return;
         }
 
+        const { brindesAtivos } = verificarPromocoesQuantidade();
         const { desconto, totalFinal, pontosGanhos } = calcularValoresCarrinho();
         const numeroPedido = gerarNumeroPedido();
 
         // Credita os pontos ao cliente
         salvarPontosCliente(obterPontosCliente() + pontosGanhos);
 
+        const cuponsUsados = [];
+        if (cupomAplicado) cuponsUsados.push(cupomAplicado.codigo);
+        brindesAtivos.forEach(b => cuponsUsados.push(b));
+
         const novoPedido = {
             numero: numeroPedido,
             itens: [...carrinho],
             total: totalFinal,
-            cupom: cupomAplicado ? cupomAplicado.codigo : null,
+            cupom: cuponsUsados.length > 0 ? cuponsUsados.join(", ") : null,
             desconto,
             pontosGanhos,
             statusIndex: 0,
@@ -524,18 +630,29 @@ if (botaoFinalizar) {
         let mensagem = `Olá! Gostaria de fazer o *Pedido ${numeroPedido}* no Bistrô da Josi.\n\n`;
 
         carrinho.forEach((item, indice) => {
-            mensagem += `${indice + 1}. ${item.quantidade}x ${item.nome}\n`;
+            const nomeItem = item.tamanhoRotulo ? item.tamanhoRotulo : item.nome;
+            mensagem += `${indice + 1}. ${item.quantidade}x ${nomeItem}\n`;
 
             if (item.proteinas) {
                 mensagem += `Proteínas: ${item.proteinas.join(", ")}\n`;
                 mensagem += `Acompanhamentos: ${item.acompanhamentos.join(", ")}\n`;
             }
 
-            mensagem += `Subtotal: ${item.ehRecompensa ? "GRÁTIS (Fidelidade)" : formatarMoeda(item.subtotal)}\n\n`;
+            const valorTexto = item.ehBrindeQuantidade
+                ? `GRÁTIS (${item.codigoCupom})`
+                : item.ehRecompensa
+                    ? "GRÁTIS (Fidelidade)"
+                    : formatarMoeda(item.subtotal);
+
+            mensagem += `Subtotal: ${valorTexto}\n\n`;
         });
 
         if (desconto > 0 && cupomAplicado) {
             mensagem += `Cupom (${cupomAplicado.codigo}): -${formatarMoeda(desconto)}\n`;
+        }
+
+        if (brindesAtivos.length > 0) {
+            mensagem += `Promoção ativada: ${brindesAtivos.join(" + ")}\n`;
         }
 
         mensagem += `TOTAL: ${formatarMoeda(totalFinal)}\n`;
