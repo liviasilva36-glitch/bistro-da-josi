@@ -1,4 +1,52 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+    getFirestore,
+    doc,
+    addDoc,
+    collection,
+    onSnapshot,
+    runTransaction
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// =======================================================
+// COLE AQUI AS MESMAS CHAVES DO SEU PROJETO FIREBASE:
+// =======================================================
+const firebaseConfig = {
+    apiKey: "SUA_API_KEY",
+    authDomain: "SEU_PROJETO.firebaseapp.com",
+    projectId: "SEU_PROJECT_ID",
+    storageBucket: "SEU_PROJETO.appspot.com",
+    messagingSenderId: "SEU_SENDER_ID",
+    appId: "SEU_APP_ID"
+};
+
+const firebaseConfigurado = firebaseConfig.apiKey !== "SUA_API_KEY";
+let db = null;
+if (firebaseConfigurado) {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+}
+
 const telefoneWhatsApp = "558488629560";
+const DIAS_VALIDADE_FIDELIDADE = 30; // Validade de 1 mês
+
+function dataMais30DiasISO() {
+    const data = new Date();
+    data.setDate(data.getDate() + 30);
+    return data.toISOString().split("T")[0];
+}
+
+function formatarDataBR(dataISO) {
+    if (!dataISO) return "";
+    const [ano, mes, dia] = dataISO.split("-");
+    return `${dia}/${mes}/${ano}`;
+}
+
+function cupomEstaExpirado(validadeISO) {
+    if (!validadeISO) return false;
+    const hojeISO = new Date().toISOString().split("T")[0];
+    return hojeISO > validadeISO;
+}
 
 const CONFIG_PADRAO = {
     preco1Proteina: 15,
@@ -26,39 +74,43 @@ const CONFIG_PADRAO = {
         { nome: "Coca-Cola lata", preco: 6, ativo: true }
     ],
     cupons: [
-        { codigo: "JOSI10", tipo: "percentual", valor: 10, ativo: true },
-        { codigo: "BISTRO5", tipo: "fixo", valor: 5, ativo: true }
+        { codigo: "JOSI10", tipo: "percentual", valor: 10, validade: dataMais30DiasISO(), ativo: true },
+        { codigo: "BISTRO5", tipo: "fixo", valor: 5, validade: dataMais30DiasISO(), ativo: true }
     ]
 };
+
+let configCardapioAtual = JSON.parse(localStorage.getItem("bistro_config")) || CONFIG_PADRAO;
 
 const RECOMPENSAS_FIDELIDADE = [
     {
         id: "rec_bebida",
         titulo: "🥤 Refrigerante Lata Grátis",
-        descricao: "Na compra de 10 marmitas, ganhe 1 refrigerante lata por conta da casa.",
+        descricao: "Na compra de 10 marmitas (dentro de 1 mês), ganhe 1 refrigerante lata por conta da casa.",
         pontosNecessarios: 10,
         itemCarrinho: "Recompensa Fidelidade (10 marmitas): Refrigerante Lata Grátis"
     },
     {
         id: "rec_quentinha1",
         titulo: "🍱 Marmita Média (1 Proteína) Grátis",
-        descricao: "Na compra de 20 marmitas, ganhe 1 marmita média (R$ 15,00) à sua escolha.",
+        descricao: "Na compra de 20 marmitas (dentro de 1 mês), ganhe 1 marmita média (R$ 15,00) à sua escolha.",
         pontosNecessarios: 20,
         itemCarrinho: "Recompensa Fidelidade (20 marmitas): Marmita Média (1 Proteína) Grátis"
     }
 ];
 
 function obterConfigCardapio() {
-    const salva = JSON.parse(localStorage.getItem("bistro_config"));
-    if (!salva) {
-        localStorage.setItem("bistro_config", JSON.stringify(CONFIG_PADRAO));
-        return CONFIG_PADRAO;
-    }
-    if (!salva.cupons) {
-        salva.cupons = CONFIG_PADRAO.cupons;
-        localStorage.setItem("bistro_config", JSON.stringify(salva));
-    }
-    return salva;
+    return configCardapioAtual;
+}
+
+if (db) {
+    onSnapshot(doc(db, "configuracoes", "cardapio"), (snap) => {
+        if (snap.exists()) {
+            configCardapioAtual = snap.data();
+            localStorage.setItem("bistro_config", JSON.stringify(configCardapioAtual));
+            renderizarCardapio();
+            atualizarPreco();
+        }
+    });
 }
 
 let carrinho = [];
@@ -83,7 +135,6 @@ function formatarMoeda(valor) {
 let timerToast;
 
 function dispararEfeitoCompra(titulo, subtitulo, emoji = "🍱", elementoOrigem = null) {
-    // 1. Ícone voando do botão clicado até a seção do pedido
     if (elementoOrigem && listaCarrinho) {
         const rectOrigem = elementoOrigem.getBoundingClientRect();
         const rectDestino = listaCarrinho.getBoundingClientRect();
@@ -106,14 +157,12 @@ function dispararEfeitoCompra(titulo, subtitulo, emoji = "🍱", elementoOrigem 
         setTimeout(() => voador.remove(), 800);
     }
 
-    // 2. Pulso no valor total do pedido
     if (totalPedido) {
         totalPedido.classList.remove("pulsar-total");
         void totalPedido.offsetWidth;
         totalPedido.classList.add("pulsar-total");
     }
 
-    // 3. Notificação Toast flutuante
     let toast = document.getElementById("toast-compra");
     if (!toast) {
         toast = document.createElement("div");
@@ -152,18 +201,41 @@ function dispararEfeitoCompra(titulo, subtitulo, emoji = "🍱", elementoOrigem 
 }
 
 // =========================================
-// FIDELIDADE POR MARMITAS (1 MARMITA = 1 PONTO)
+// FIDELIDADE POR MARMITAS (VALIDADE DE 1 MÊS)
 // =========================================
-function obterPontosCliente() {
-    return Number(localStorage.getItem("bistro_pontos_cliente") || 0);
+function obterDadosFidelidade() {
+    const pontos = Number(localStorage.getItem("bistro_pontos_cliente") || 0);
+    const validadeISO = localStorage.getItem("bistro_pontos_validade");
+
+    if (pontos > 0 && validadeISO && cupomEstaExpirado(validadeISO)) {
+        // Expirou após 1 mês (30 dias) sem compra
+        localStorage.setItem("bistro_pontos_cliente", "0");
+        localStorage.removeItem("bistro_pontos_validade");
+        return { pontos: 0, validadeISO: null };
+    }
+
+    return { pontos, validadeISO };
 }
 
-function salvarPontosCliente(novoSaldo) {
-    localStorage.setItem("bistro_pontos_cliente", Math.max(0, Math.floor(novoSaldo)));
+function obterPontosCliente() {
+    return obterDadosFidelidade().pontos;
+}
+
+function salvarPontosCliente(novoSaldo, renovarValidade = false) {
+    const saldoFinal = Math.max(0, Math.floor(novoSaldo));
+    localStorage.setItem("bistro_pontos_cliente", saldoFinal);
+
+    if (saldoFinal === 0) {
+        localStorage.removeItem("bistro_pontos_validade");
+    } else if (renovarValidade || !localStorage.getItem("bistro_pontos_validade")) {
+        const expira = new Date();
+        expira.setDate(expira.getDate() + DIAS_VALIDADE_FIDELIDADE);
+        localStorage.setItem("bistro_pontos_validade", expira.toISOString().split("T")[0]);
+    }
 }
 
 function renderizarFidelidade() {
-    const marmitasAcumuladas = obterPontosCliente();
+    const { pontos: marmitasAcumuladas, validadeISO } = obterDadosFidelidade();
     const saldoEl = document.getElementById("saldo-pontos");
     const nivelEl = document.getElementById("nivel-fidelidade");
     const barraEl = document.getElementById("barra-pontos");
@@ -172,7 +244,11 @@ function renderizarFidelidade() {
 
     if (!saldoEl || !listaRecEl) return;
 
-    saldoEl.textContent = `${marmitasAcumuladas} marmita${marmitasAcumuladas === 1 ? "" : "s"}`;
+    const textoValidade = (marmitasAcumuladas > 0 && validadeISO)
+        ? ` (válido até ${formatarDataBR(validadeISO)})`
+        : " (validade de 1 mês)";
+
+    saldoEl.textContent = `${marmitasAcumuladas} marmita${marmitasAcumuladas === 1 ? "" : "s"}${textoValidade}`;
 
     if (marmitasAcumuladas >= 20) {
         nivelEl.textContent = "👑 Cliente Ouro";
@@ -203,7 +279,7 @@ function renderizarFidelidade() {
 
         card.innerHTML = `
             <div>
-                <span class="custo-pontos">${rec.pontosNecessarios} marmitas</span>
+                <span class="custo-pontos">${rec.pontosNecessarios} marmitas • Validade 1 mês</span>
                 <h4>${rec.titulo}</h4>
                 <p>${rec.descricao}</p>
             </div>
@@ -216,7 +292,7 @@ function renderizarFidelidade() {
         btnResgatar.addEventListener("click", () => {
             if (obterPontosCliente() < rec.pontosNecessarios) return;
 
-            salvarPontosCliente(obterPontosCliente() - rec.pontosNecessarios);
+            salvarPontosCliente(obterPontosCliente() - rec.pontosNecessarios, false);
 
             carrinho.push({
                 nome: rec.itemCarrinho,
@@ -238,7 +314,7 @@ function renderizarFidelidade() {
 }
 
 // =========================================
-// CUPONS DE DESCONTO
+// CUPONS DE DESCONTO (COM CHECAGEM DE VALIDADE)
 // =========================================
 const btnAplicarCupom = document.getElementById("btn-aplicar-cupom");
 const inputCupom = document.getElementById("input-cupom");
@@ -255,12 +331,20 @@ if (btnAplicarCupom) {
 
         const config = obterConfigCardapio();
         const cupomEncontrado = (config.cupons || []).find(
-            c => c.codigo.toUpperCase() === codigoDigitado && c.ativo
+            c => c.codigo.toUpperCase() === codigoDigitado
         );
 
-        if (!cupomEncontrado) {
+        if (!cupomEncontrado || !cupomEncontrado.ativo) {
             cupomAplicado = null;
-            msgCupom.textContent = "Cupom inválido ou expirado.";
+            msgCupom.textContent = "Cupom inválido ou desativado.";
+            msgCupom.className = "mensagem-cupom erro";
+            renderizarCarrinho();
+            return;
+        }
+
+        if (cupomEstaExpirado(cupomEncontrado.validade)) {
+            cupomAplicado = null;
+            msgCupom.textContent = `Este cupom expirou em ${formatarDataBR(cupomEncontrado.validade)}.`;
             msgCupom.className = "mensagem-cupom erro";
             renderizarCarrinho();
             return;
@@ -271,7 +355,11 @@ if (btnAplicarCupom) {
             ? `${cupomEncontrado.valor}% de desconto`
             : `${formatarMoeda(cupomEncontrado.valor)} de desconto`;
 
-        msgCupom.textContent = `Cupom ${cupomEncontrado.codigo} aplicado (${descTexto})!`;
+        const validadeTexto = cupomEncontrado.validade
+            ? ` (válido até ${formatarDataBR(cupomEncontrado.validade)})`
+            : "";
+
+        msgCupom.textContent = `Cupom ${cupomEncontrado.codigo} aplicado: ${descTexto}${validadeTexto}!`;
         msgCupom.className = "mensagem-cupom sucesso";
         renderizarCarrinho();
     });
@@ -536,7 +624,7 @@ function renderizarCarrinho() {
 
         remover.addEventListener("click", () => {
             if (item.ehRecompensa && item.pontosGastos) {
-                salvarPontosCliente(obterPontosCliente() + item.pontosGastos);
+                salvarPontosCliente(obterPontosCliente() + item.pontosGastos, false);
                 renderizarFidelidade();
             }
             carrinho.splice(indice, 1);
@@ -566,11 +654,11 @@ function renderizarCarrinho() {
 
     const avisoPontos = document.getElementById("aviso-pontos-ganhos");
     if (avisoPontos) {
-        avisoPontos.innerHTML = `✨ Você vai acumular <strong>+${pontosGanhos} marmita${pontosGanhos === 1 ? "" : "s"}</strong> no cartão fidelidade com este pedido!`;
+        avisoPontos.innerHTML = `✨ Você vai acumular <strong>+${pontosGanhos} marmita${pontosGanhos === 1 ? "" : "s"}</strong> no cartão fidelidade (válidas por 1 mês)!`;
     }
 }
 
-// RASTREAMENTO DE PEDIDOS
+// RASTREAMENTO DE PEDIDOS EM TEMPO REAL
 const STATUS_LISTA = [
     "Pedido recebido",
     "Em preparação",
@@ -578,16 +666,28 @@ const STATUS_LISTA = [
     "Entregue"
 ];
 
-function gerarNumeroPedido() {
-    const ultimo = Number(localStorage.getItem("bistro_ultimo_numero") || 0) + 1;
-    localStorage.setItem("bistro_ultimo_numero", ultimo);
-    return `#${String(ultimo).padStart(3, "0")}`;
+let unsubscribeRastreamento = null;
+
+async function gerarNumeroPedido() {
+    if (!db) {
+        const ultimo = Number(localStorage.getItem("bistro_ultimo_numero") || 0) + 1;
+        localStorage.setItem("bistro_ultimo_numero", ultimo);
+        return `#${String(ultimo).padStart(3, "0")}`;
+    }
+
+    const contadorRef = doc(db, "configuracoes", "contador_pedidos");
+    const novoNumero = await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(contadorRef);
+        const atual = snap.exists() ? (snap.data().ultimo || 0) + 1 : 1;
+        transaction.set(contadorRef, { ultimo: atual });
+        return atual;
+    });
+
+    return `#${String(novoNumero).padStart(3, "0")}`;
 }
 
-function atualizarTelaRastreamento() {
-    const pedidoSalvo = JSON.parse(localStorage.getItem("bistro_pedido_atual"));
+function exibirDadosRastreamento(pedidoSalvo) {
     const secaoRastreamento = document.getElementById("secao-rastreamento");
-
     if (!pedidoSalvo || !secaoRastreamento) return;
 
     secaoRastreamento.style.display = "block";
@@ -604,85 +704,107 @@ function atualizarTelaRastreamento() {
     });
 }
 
-// FINALIZAR PELO WHATSAPP
+function atualizarTelaRastreamento() {
+    const pedidoSalvo = JSON.parse(localStorage.getItem("bistro_pedido_atual"));
+    if (!pedidoSalvo) return;
+
+    exibirDadosRastreamento(pedidoSalvo);
+
+    if (db && pedidoSalvo.idDoc) {
+        if (unsubscribeRastreamento) unsubscribeRastreamento();
+        unsubscribeRastreamento = onSnapshot(doc(db, "pedidos", pedidoSalvo.idDoc), (snap) => {
+            if (snap.exists()) {
+                const atualizado = { idDoc: snap.id, ...snap.data() };
+                localStorage.setItem("bistro_pedido_atual", JSON.stringify(atualizado));
+                exibirDadosRastreamento(atualizado);
+            }
+        });
+    }
+}
+
+// FINALIZAR PELO WHATSAPP E SALVAR NO PAINEL DA JOSI
 const botaoFinalizar = document.getElementById("finalizar-pedido");
 
 if (botaoFinalizar) {
-    botaoFinalizar.addEventListener("click", () => {
+    botaoFinalizar.addEventListener("click", async () => {
         if (carrinho.length === 0) {
             alert("Adicione algum produto ao seu pedido!");
             return;
         }
 
-        const { desconto, totalFinal, pontosGanhos } = calcularValoresCarrinho();
-        const numeroPedido = gerarNumeroPedido();
+        botaoFinalizar.disabled = true;
 
-        salvarPontosCliente(obterPontosCliente() + pontosGanhos);
+        try {
+            const { desconto, totalFinal, pontosGanhos } = calcularValoresCarrinho();
+            const numeroPedido = await gerarNumeroPedido();
 
-        const novoPedido = {
-            numero: numeroPedido,
-            itens: [...carrinho],
-            total: totalFinal,
-            cupom: cupomAplicado ? cupomAplicado.codigo : null,
-            desconto,
-            pontosGanhos,
-            statusIndex: 0,
-            criadoEm: new Date().toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit"
-            })
-        };
+            salvarPontosCliente(obterPontosCliente() + pontosGanhos, pontosGanhos > 0);
 
-        localStorage.setItem("bistro_pedido_atual", JSON.stringify(novoPedido));
+            const novoPedido = {
+                numero: numeroPedido,
+                itens: [...carrinho],
+                total: totalFinal,
+                cupom: cupomAplicado ? cupomAplicado.codigo : null,
+                desconto,
+                pontosGanhos,
+                statusIndex: 0,
+                timestamp: Date.now(),
+                criadoEm: new Date().toLocaleTimeString("pt-BR", {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                })
+            };
 
-        const historico = JSON.parse(localStorage.getItem("bistro_pedidos") || "[]");
-        historico.push(novoPedido);
-        localStorage.setItem("bistro_pedidos", JSON.stringify(historico));
-
-        let mensagem = `Olá! Gostaria de fazer o *Pedido ${numeroPedido}* no Bistrô da Josi.\n\n`;
-
-        carrinho.forEach((item, indice) => {
-            mensagem += `${indice + 1}. ${item.quantidade}x ${item.nome}\n`;
-
-            if (item.proteinas) {
-                mensagem += `Proteínas: ${item.proteinas.join(", ")}\n`;
-                mensagem += `Acompanhamentos: ${item.acompanhamentos.join(", ")}\n`;
+            if (db) {
+                const docRef = await addDoc(collection(db, "pedidos"), novoPedido);
+                novoPedido.idDoc = docRef.id;
+            } else {
+                const historico = JSON.parse(localStorage.getItem("bistro_pedidos") || "[]");
+                historico.push(novoPedido);
+                localStorage.setItem("bistro_pedidos", JSON.stringify(historico));
             }
 
-            mensagem += `Subtotal: ${item.ehRecompensa ? "GRÁTIS (Fidelidade)" : formatarMoeda(item.subtotal)}\n\n`;
-        });
+            localStorage.setItem("bistro_pedido_atual", JSON.stringify(novoPedido));
 
-        if (desconto > 0 && cupomAplicado) {
-            mensagem += `Cupom (${cupomAplicado.codigo}): -${formatarMoeda(desconto)}\n`;
+            let mensagem = `Olá! Gostaria de fazer o *Pedido ${numeroPedido}* no Bistrô da Josi.\n\n`;
+
+            carrinho.forEach((item, indice) => {
+                mensagem += `${indice + 1}. ${item.quantidade}x ${item.nome}\n`;
+
+                if (item.proteinas) {
+                    mensagem += `Proteínas: ${item.proteinas.join(", ")}\n`;
+                    mensagem += `Acompanhamentos: ${item.acompanhamentos.join(", ")}\n`;
+                }
+
+                mensagem += `Subtotal: ${item.ehRecompensa ? "GRÁTIS (Fidelidade)" : formatarMoeda(item.subtotal)}\n\n`;
+            });
+
+            if (desconto > 0 && cupomAplicado) {
+                mensagem += `Cupom (${cupomAplicado.codigo}): -${formatarMoeda(desconto)}\n`;
+            }
+
+            mensagem += `TOTAL: ${formatarMoeda(totalFinal)}\n`;
+            mensagem += `Cartão Fidelidade: +${pontosGanhos} marmita${pontosGanhos === 1 ? "" : "s"} acumulada${pontosGanhos === 1 ? "" : "s"} (validade 1 mês)`;
+            mensagem += "\n\nAguardo a confirmação. Obrigado!";
+
+            const link = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(mensagem)}`;
+
+            carrinho = [];
+            cupomAplicado = null;
+            if (inputCupom) inputCupom.value = "";
+            if (msgCupom) msgCupom.textContent = "";
+
+            renderizarFidelidade();
+            renderizarCarrinho();
+            atualizarTelaRastreamento();
+
+            document.getElementById("secao-rastreamento").scrollIntoView({ behavior: "smooth" });
+            window.open(link, "_blank");
+        } finally {
+            botaoFinalizar.disabled = false;
         }
-
-        mensagem += `TOTAL: ${formatarMoeda(totalFinal)}\n`;
-        mensagem += `Cartão Fidelidade: +${pontosGanhos} marmita${pontosGanhos === 1 ? "" : "s"} acumulada${pontosGanhos === 1 ? "" : "s"}`;
-        mensagem += "\n\nAguardo a confirmação. Obrigado!";
-
-        const link = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(mensagem)}`;
-
-        carrinho = [];
-        cupomAplicado = null;
-        if (inputCupom) inputCupom.value = "";
-        if (msgCupom) msgCupom.textContent = "";
-
-        renderizarFidelidade();
-        renderizarCarrinho();
-        atualizarTelaRastreamento();
-
-        document.getElementById("secao-rastreamento").scrollIntoView({ behavior: "smooth" });
-        window.open(link, "_blank");
     });
 }
-
-// SINCRONIZAÇÃO EM TEMPO REAL
-window.addEventListener("storage", () => {
-    renderizarCardapio();
-    atualizarPreco();
-    renderizarFidelidade();
-    atualizarTelaRastreamento();
-});
 
 // ACESSO SECRETO AO PAINEL DA JOSI
 document.addEventListener("keydown", (e) => {
