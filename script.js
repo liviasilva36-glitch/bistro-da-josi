@@ -45,6 +45,7 @@ function cupomEstaExpirado(validadeISO) {
 const CONFIG_PADRAO = {
     preco1Proteina: 15,
     preco2Proteinas: 20,
+    marmitasEspeciais: [],
     proteinas: [
         { nome: "Linguiça assada", rotulo: "🌭 Linguiça assada", ativo: true },
         { nome: "Frango assado", rotulo: "🍗 Frango assado", ativo: true },
@@ -371,7 +372,7 @@ function calcularValoresCarrinho() {
     const totalFinal = Math.max(0, subtotal - desconto);
 
     const pontosGanhos = carrinho.reduce((soma, item) => {
-        if (item.nome === "Quentinha" && !item.ehRecompensa) {
+        if ((item.nome === "Quentinha" || item.ehMarmitaEspecial) && !item.ehRecompensa) {
             return soma + Number(item.quantidade);
         }
         return soma;
@@ -390,6 +391,49 @@ function renderizarCardapio() {
     const elPreco2 = document.getElementById("exibir-preco-2");
     if (elPreco1) elPreco1.textContent = formatarMoeda(config.preco1Proteina);
     if (elPreco2) elPreco2.textContent = formatarMoeda(config.preco2Proteinas);
+
+    // MARMITAS ESPECIAIS R$ 25,00
+    const secaoEspeciais = document.getElementById("secao-especiais");
+    const containerEspeciais = document.getElementById("lista-especiais");
+    const especiaisAtivas = (config.marmitasEspeciais || []).filter(e => e.ativo);
+
+    if (secaoEspeciais && containerEspeciais) {
+        if (especiaisAtivas.length === 0) {
+            secaoEspeciais.style.display = "none";
+        } else {
+            secaoEspeciais.style.display = "block";
+            containerEspeciais.innerHTML = "";
+
+            especiaisAtivas.forEach((esp) => {
+                const precoItem = Number(esp.preco || 25);
+                const article = document.createElement("article");
+                article.className = "bebida";
+                article.innerHTML = `
+                    <h3>${esp.nome}</h3>
+                    ${esp.descricao ? `<p style="font-size: 0.9rem; opacity: 0.85; margin: 6px 0;">${esp.descricao}</p>` : ""}
+                    <strong>${formatarMoeda(precoItem)}</strong>
+                    <button type="button">+ Adicionar</button>
+                `;
+
+                const btnAddEsp = article.querySelector("button");
+                btnAddEsp.addEventListener("click", () => {
+                    carrinho.push({
+                        nome: `Marmita Especial: ${esp.nome}`,
+                        descricao: esp.descricao || "",
+                        quantidade: 1,
+                        preco: precoItem,
+                        subtotal: precoItem,
+                        ehMarmitaEspecial: true
+                    });
+                    animarUltimoItem = true;
+                    renderizarCarrinho();
+                    dispararEfeitoCompra("Marmita especial adicionada!", `1x ${esp.nome}`, "⭐", btnAddEsp);
+                });
+
+                containerEspeciais.appendChild(article);
+            });
+        }
+    }
 
     const containerProteinas = document.getElementById("lista-proteinas");
     if (containerProteinas) {
@@ -596,6 +640,12 @@ function renderizarCarrinho() {
 
         descricao.appendChild(titulo);
 
+        if (item.descricao) {
+            const descP = document.createElement("p");
+            descP.textContent = item.descricao;
+            descricao.appendChild(descP);
+        }
+
         if (item.proteinas) {
             const proteinas = document.createElement("p");
             proteinas.textContent = "Proteínas: " + item.proteinas.join(", ");
@@ -749,6 +799,10 @@ if (botaoFinalizar) {
 
             carrinho.forEach((item, indice) => {
                 mensagem += `${indice + 1}. ${item.quantidade}x ${item.nome}\n`;
+
+                if (item.descricao) {
+                    mensagem += `Detalhes: ${item.descricao}\n`;
+                }
 
                 if (item.proteinas) {
                     mensagem += `Proteínas: ${item.proteinas.join(", ")}\n`;

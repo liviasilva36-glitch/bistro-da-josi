@@ -59,6 +59,7 @@ function cupomEstaExpirado(validadeISO) {
 const CONFIG_INICIAL = {
     preco1Proteina: 15,
     preco2Proteinas: 20,
+    marmitasEspeciais: [],
     proteinas: [
         { nome: "Linguiça assada", rotulo: "🌭 Linguiça assada", ativo: true },
         { nome: "Frango assado", rotulo: "🍗 Frango assado", ativo: true },
@@ -99,6 +100,9 @@ async function carregarConfigNuvem() {
         configAtual = JSON.parse(JSON.stringify(CONFIG_INICIAL));
     } else {
         configAtual = snap.data();
+        if (!configAtual.marmitasEspeciais) {
+            configAtual.marmitasEspeciais = [];
+        }
     }
     return configAtual;
 }
@@ -202,6 +206,9 @@ function renderizarPedidosAdmin(pedidos) {
 
         const itensHtml = (pedido.itens || []).map((item) => {
             let detalhe = `<strong>${item.quantidade}x ${item.nome}</strong> (${formatarMoeda(item.subtotal)})`;
+            if (item.descricao) {
+                detalhe += `<br><small>${item.descricao}</small>`;
+            }
             if (item.proteinas) {
                 detalhe += `<br><small>Proteínas: ${item.proteinas.join(", ")}</small>`;
                 detalhe += `<br><small>Acomp.: ${item.acompanhamentos.join(", ")}</small>`;
@@ -282,6 +289,26 @@ document.getElementById("btn-salvar-precos").addEventListener("click", async () 
 
 // GERENCIAR ITENS DO CARDÁPIO
 function renderizarListasCardapioAdmin() {
+    if (!configAtual.marmitasEspeciais) configAtual.marmitasEspeciais = [];
+
+    const elEspeciais = document.getElementById("admin-lista-especiais");
+    if (elEspeciais) {
+        elEspeciais.innerHTML = "";
+        configAtual.marmitasEspeciais.forEach((item, idx) => {
+            const descTexto = item.descricao ? ` — <small>${item.descricao}</small>` : "";
+            const texto = `<strong>${item.nome}</strong> (${formatarMoeda(item.preco || 25)})${descTexto}`;
+            elEspeciais.appendChild(criarLinhaItemAdmin(texto, item.ativo, async () => {
+                configAtual.marmitasEspeciais[idx].ativo = !configAtual.marmitasEspeciais[idx].ativo;
+                await salvarConfigNuvem(configAtual);
+                renderizarListasCardapioAdmin();
+            }, async () => {
+                configAtual.marmitasEspeciais.splice(idx, 1);
+                await salvarConfigNuvem(configAtual);
+                renderizarListasCardapioAdmin();
+            }));
+        });
+    }
+
     const elProt = document.getElementById("admin-lista-proteinas");
     elProt.innerHTML = "";
     configAtual.proteinas.forEach((item, idx) => {
@@ -342,6 +369,32 @@ function criarLinhaItemAdmin(texto, ativo, onToggle, onExcluir) {
     div.querySelector(".remover-item").addEventListener("click", onExcluir);
     return div;
 }
+
+document.getElementById("btn-add-especial").addEventListener("click", async () => {
+    const inputNome = document.getElementById("nova-especial-nome");
+    const inputDesc = document.getElementById("nova-especial-desc");
+    const nome = inputNome.value.trim();
+    const descricao = inputDesc.value.trim();
+
+    if (!nome) {
+        alert("Informe o nome da marmita especial.");
+        return;
+    }
+
+    if (!configAtual.marmitasEspeciais) configAtual.marmitasEspeciais = [];
+
+    configAtual.marmitasEspeciais.push({
+        nome,
+        descricao,
+        preco: 25,
+        ativo: true
+    });
+
+    await salvarConfigNuvem(configAtual);
+    inputNome.value = "";
+    inputDesc.value = "";
+    renderizarListasCardapioAdmin();
+});
 
 document.getElementById("btn-add-proteina").addEventListener("click", async () => {
     const input = document.getElementById("nova-proteina");
