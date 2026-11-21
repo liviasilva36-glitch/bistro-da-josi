@@ -171,6 +171,61 @@ inputSenha.addEventListener("keypress", (e) => {
     if (e.key === "Enter") btnEntrar.click();
 });
 
+// ALERTA SONORO DE NOVO PEDIDO (WEB AUDIO API)
+let audioCtx = null;
+let cargaInicialPedidos = true;
+let totalPedidosAnterior = 0;
+
+function tocarSomNovoPedido() {
+    try {
+        if (!audioCtx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+        }
+        if (audioCtx.state === "suspended") {
+            audioCtx.resume();
+        }
+
+        const agora = audioCtx.currentTime;
+        const notas = [880, 1174.66, 1318.51];
+
+        notas.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq, agora + idx * 0.14);
+
+            gain.gain.setValueAtTime(0.001, agora + idx * 0.14);
+            gain.gain.exponentialRampToValueAtTime(0.35, agora + idx * 0.14 + 0.03);
+            gain.gain.exponentialRampToValueAtTime(0.001, agora + idx * 0.14 + 0.55);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start(agora + idx * 0.14);
+            osc.stop(agora + idx * 0.14 + 0.6);
+        });
+    } catch (e) {
+        console.warn("Não foi possível reproduzir o som:", e);
+    }
+}
+
+document.addEventListener("click", () => {
+    if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+    }
+    if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
+}, { once: true });
+
+const btnTestarSom = document.getElementById("btn-testar-som");
+if (btnTestarSom) {
+    btnTestarSom.addEventListener("click", tocarSomNovoPedido);
+}
+
 // ESCUTAR PEDIDOS EM TEMPO REAL
 function iniciarEscutaPedidos() {
     if (escutaAtiva) return;
@@ -178,10 +233,19 @@ function iniciarEscutaPedidos() {
 
     const q = query(collection(db, "pedidos"), orderBy("timestamp", "asc"));
     onSnapshot(q, (snapshot) => {
-        pedidosEmMemoria = snapshot.docs.map((documento) => ({
+        const novosPedidos = snapshot.docs.map((documento) => ({
             idDoc: documento.id,
             ...documento.data()
         }));
+
+        if (!cargaInicialPedidos && novosPedidos.length > totalPedidosAnterior) {
+            tocarSomNovoPedido();
+        }
+
+        cargaInicialPedidos = false;
+        totalPedidosAnterior = novosPedidos.length;
+        pedidosEmMemoria = novosPedidos;
+
         renderizarPedidosAdmin(pedidosEmMemoria);
     }, (erro) => {
         console.error("Erro ao escutar pedidos:", erro);
