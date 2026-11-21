@@ -8,27 +8,21 @@ import {
     runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// =======================================================
-// COLE AQUI AS MESMAS CHAVES DO SEU PROJETO FIREBASE:
-// =======================================================
 const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_PROJETO.firebaseapp.com",
-    projectId: "SEU_PROJECT_ID",
-    storageBucket: "SEU_PROJETO.appspot.com",
-    messagingSenderId: "SEU_SENDER_ID",
-    appId: "SEU_APP_ID"
+    apiKey: "AIzaSyB1V9Iaam67xmjlqigbmvDuuT8yTbNz6jw",
+    authDomain: "bistro-da-josi.firebaseapp.com",
+    projectId: "bistro-da-josi",
+    storageBucket: "bistro-da-josi.firebasestorage.app",
+    messagingSenderId: "721975524073",
+    appId: "1:721975524073:web:34203b3e403de7a25b8e78",
+    measurementId: "G-VBG1TV9DGG"
 };
 
-const firebaseConfigurado = firebaseConfig.apiKey !== "SUA_API_KEY";
-let db = null;
-if (firebaseConfigurado) {
-    const app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-}
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 const telefoneWhatsApp = "558488629560";
-const DIAS_VALIDADE_FIDELIDADE = 30; // Validade de 1 mês
+const DIAS_VALIDADE_FIDELIDADE = 30;
 
 function dataMais30DiasISO() {
     const data = new Date();
@@ -102,16 +96,14 @@ function obterConfigCardapio() {
     return configCardapioAtual;
 }
 
-if (db) {
-    onSnapshot(doc(db, "configuracoes", "cardapio"), (snap) => {
-        if (snap.exists()) {
-            configCardapioAtual = snap.data();
-            localStorage.setItem("bistro_config", JSON.stringify(configCardapioAtual));
-            renderizarCardapio();
-            atualizarPreco();
-        }
-    });
-}
+onSnapshot(doc(db, "configuracoes", "cardapio"), (snap) => {
+    if (snap.exists()) {
+        configCardapioAtual = snap.data();
+        localStorage.setItem("bistro_config", JSON.stringify(configCardapioAtual));
+        renderizarCardapio();
+        atualizarPreco();
+    }
+});
 
 let carrinho = [];
 let cupomAplicado = null;
@@ -208,7 +200,6 @@ function obterDadosFidelidade() {
     const validadeISO = localStorage.getItem("bistro_pontos_validade");
 
     if (pontos > 0 && validadeISO && cupomEstaExpirado(validadeISO)) {
-        // Expirou após 1 mês (30 dias) sem compra
         localStorage.setItem("bistro_pontos_cliente", "0");
         localStorage.removeItem("bistro_pontos_validade");
         return { pontos: 0, validadeISO: null };
@@ -314,7 +305,7 @@ function renderizarFidelidade() {
 }
 
 // =========================================
-// CUPONS DE DESCONTO (COM CHECAGEM DE VALIDADE)
+// CUPONS DE DESCONTO
 // =========================================
 const btnAplicarCupom = document.getElementById("btn-aplicar-cupom");
 const inputCupom = document.getElementById("input-cupom");
@@ -669,12 +660,6 @@ const STATUS_LISTA = [
 let unsubscribeRastreamento = null;
 
 async function gerarNumeroPedido() {
-    if (!db) {
-        const ultimo = Number(localStorage.getItem("bistro_ultimo_numero") || 0) + 1;
-        localStorage.setItem("bistro_ultimo_numero", ultimo);
-        return `#${String(ultimo).padStart(3, "0")}`;
-    }
-
     const contadorRef = doc(db, "configuracoes", "contador_pedidos");
     const novoNumero = await runTransaction(db, async (transaction) => {
         const snap = await transaction.get(contadorRef);
@@ -710,7 +695,7 @@ function atualizarTelaRastreamento() {
 
     exibirDadosRastreamento(pedidoSalvo);
 
-    if (db && pedidoSalvo.idDoc) {
+    if (pedidoSalvo.idDoc) {
         if (unsubscribeRastreamento) unsubscribeRastreamento();
         unsubscribeRastreamento = onSnapshot(doc(db, "pedidos", pedidoSalvo.idDoc), (snap) => {
             if (snap.exists()) {
@@ -755,14 +740,8 @@ if (botaoFinalizar) {
                 })
             };
 
-            if (db) {
-                const docRef = await addDoc(collection(db, "pedidos"), novoPedido);
-                novoPedido.idDoc = docRef.id;
-            } else {
-                const historico = JSON.parse(localStorage.getItem("bistro_pedidos") || "[]");
-                historico.push(novoPedido);
-                localStorage.setItem("bistro_pedidos", JSON.stringify(historico));
-            }
+            const docRef = await addDoc(collection(db, "pedidos"), novoPedido);
+            novoPedido.idDoc = docRef.id;
 
             localStorage.setItem("bistro_pedido_atual", JSON.stringify(novoPedido));
 
@@ -800,6 +779,9 @@ if (botaoFinalizar) {
 
             document.getElementById("secao-rastreamento").scrollIntoView({ behavior: "smooth" });
             window.open(link, "_blank");
+        } catch (erro) {
+            console.error("Erro ao registrar pedido no Firebase:", erro);
+            alert("Erro ao enviar pedido para o painel. Verifique sua conexão e as regras do Firestore.");
         } finally {
             botaoFinalizar.disabled = false;
         }
